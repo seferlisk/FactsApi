@@ -1,6 +1,7 @@
 
 using FactsApi.Services;
 using FactsApi.Services.CatFacts;
+using FactsApi.Services.DogFacts;
 using FactsApi.Services.FactsAggregate;
 using Serilog;
 
@@ -28,7 +29,9 @@ namespace FactsApi
 
             builder.Services.Configure<ServiceUrls>(builder.Configuration.GetSection("ServiceUrls"));
 
+            builder.Services.AddScoped<IDogFactsService, DogFactsService>();
             builder.Services.AddScoped<ICatFactsService, CatFactsService>();
+            builder.Services.AddScoped<INinjaFactsService, NinjaFactsService>();
             builder.Services.AddScoped<IFactsAggregateService, FactsAggregateService>();
 
             var app = builder.Build();
