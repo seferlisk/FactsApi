@@ -22,11 +22,11 @@ namespace FactsApi.Services.FactsAggregate
 
         public async Task<FactsContainer> GetFactsAsync(int limit, string category)
         {
-            var catsPromise = catFactsService.GetFactsAsync(limit);
-            var dogsPromise = dogFactsService.GetFactsAsync(limit);
-            var ninjasPromise = ninjaFactsService.GetFactsAsync(limit);
+            var catsTask = catFactsService.GetFactsAsync(limit);
+            var dogsTask = dogFactsService.GetFactsAsync(limit);
+            var ninjasTask = ninjaFactsService.GetFactsAsync(limit);
 
-            var allResults = await Task.WhenAll(catsPromise, dogsPromise, ninjasPromise);
+            var allResults = await Task.WhenAll(catsTask, dogsTask, ninjasTask);
 
             var facts = new List<Fact>();
 
