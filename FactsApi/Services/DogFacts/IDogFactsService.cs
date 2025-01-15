@@ -4,7 +4,7 @@ namespace FactsApi.Services.DogFacts
 {
     public interface IDogFactsService
     {
-        Task<DogFactsServiceDTO> GetDogFactsAsync(int limit);
+        Task<DogsFactsDTO> GetDogFactsAsync(int limit);
     }
 }
 

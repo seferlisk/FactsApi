@@ -15,7 +15,7 @@ namespace FactsApi.Services.DogFacts
             this.logger = logger;
         }
 
-        public async Task<DogFactsServiceDTO> GetDogFactsAsync(int limit)
+        public async Task<DogsFactsDTO> GetDogFactsAsync(int limit)
         {
             var url = $"{serviceUrls.DogFact}/facts?limit={limit}";
             try
@@ -30,7 +30,9 @@ namespace FactsApi.Services.DogFacts
 
                 var jsonString = await response.Content.ReadAsStringAsync();
 
-                var dogFactsResponse = JsonSerializer.Deserialize<DogFactsServiceDTO>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var dogFactsResponse = JsonSerializer.Deserialize<DogsFactsDTO>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                
+                dogFactsResponse.Data = dogFactsResponse.Data?.Take(limit).ToList();
 
                 return dogFactsResponse;
             }

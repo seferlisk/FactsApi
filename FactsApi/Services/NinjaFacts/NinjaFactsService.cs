@@ -16,9 +16,9 @@ namespace FactsApi.Services.NinjaFacts
             this.logger = logger;
         }
 
-        public async Task<NinjaFactsServiceDTO> GetNinjaFactsAsync(int limit)
+        public async Task<List<NinjaFactDTO>> GetNinjaFactsAsync(int limit)
         {
-            var url = $"{serviceUrls.NinjaFact}/facts?limit={limit}";
+            var url = $"{serviceUrls.NinjaFact}/facts";
             try
             {
                 logger.LogDebug($"Call to :{url}");
@@ -31,9 +31,11 @@ namespace FactsApi.Services.NinjaFacts
 
                 var jsonString = await response.Content.ReadAsStringAsync();
 
-                var ninjaFactsResponse = JsonSerializer.Deserialize<NinjaFactsServiceDTO>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var ninjaFactsResponse = JsonSerializer.Deserialize<List<NinjaFactDTO>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                return ninjaFactsResponse;
+                var ninjaFactsResponseWithLimit = ninjaFactsResponse.Take(limit).ToList();
+
+                return ninjaFactsResponseWithLimit;
             }
             catch (Exception ex)
             {

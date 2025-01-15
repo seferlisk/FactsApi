@@ -1,14 +1,14 @@
-﻿namespace FactsApi.Services.DogFacts.DTO
+﻿namespace FactsApi.Services.CatFacts.DTO
 {
-    public class DogFactsServiceDTO
+    public class CatFactsDTO
     {
         public int CurrentPage { get; set; }
-        public List<DogFact> Data { get; set; }
+        public List<CatFact> Data { get; set; }
         public string FirstPageUrl { get; set; }
         public int From { get; set; }
         public int LastPage { get; set; }
         public string LastPageUrl { get; set; }
-        public List<DogFactsLink> Links { get; set; }
+        public List<CatFactsLink> Links { get; set; }
         public string NextPageUrl { get; set; }
         public string Path { get; set; }
         public int PerPage { get; set; }
@@ -17,13 +17,13 @@
         public int Total { get; set; }
     }
 
-    public class DogFact
+    public class CatFact
     {
         public string Fact { get; set; }
         public int Length { get; set; }
     }
 
-    public class DogFactsLink
+    public class CatFactsLink
     {
         public string Url { get; set; }
         public string Label { get; set; }

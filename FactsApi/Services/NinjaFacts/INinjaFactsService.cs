@@ -4,6 +4,6 @@ namespace FactsApi.Services.NinjaFacts
 {
     public interface INinjaFactsService
     {
-        Task<NinjaFactsServiceDTO> GetNinjaFactsAsync(int limit);
+        Task<List<NinjaFactDTO>> GetNinjaFactsAsync(int limit);
     }
 }
