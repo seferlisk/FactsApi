@@ -3,6 +3,7 @@ using FactsApi.Services;
 using FactsApi.Services.CatFacts;
 using FactsApi.Services.DogFacts;
 using FactsApi.Services.FactsAggregate;
+using FactsApi.Services.NinjaFacts;
 using Serilog;
 
 namespace FactsApi
@@ -27,7 +28,7 @@ namespace FactsApi
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.Configure<ServiceUrls>(builder.Configuration.GetSection("ServiceUrls"));
+            builder.Services.Configure<ServiceSettings>(builder.Configuration.GetSection("ServiceSettings"));
 
             builder.Services.AddScoped<IDogFactsService, DogFactsService>();
             builder.Services.AddScoped<ICatFactsService, CatFactsService>();

@@ -2,27 +2,30 @@
 using FactsApi.Services.NinjaFacts;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
+using FactsApi.Services.Interfaces;
 
 namespace FactsApi.Services.NinjaFacts
 {
     public class NinjaFactsService : INinjaFactsService
     {
-        private readonly ServiceUrls serviceUrls;
+        private readonly ServiceSettings serviceSettings;
         private readonly ILogger logger;
 
-        public NinjaFactsService(IOptions<ServiceUrls> serviceUrls, ILogger<NinjaFactsService> logger)
+        public NinjaFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<NinjaFactsService> logger)
         {
-            this.serviceUrls = serviceUrls.Value;
+            this.serviceSettings = serviceSettings.Value;
             this.logger = logger;
         }
 
-        public async Task<List<NinjaFactDTO>> GetNinjaFactsAsync(int limit)
+        public async Task<FactsContainer> GetFactsAsync(int limit)
         {
-            var url = $"{serviceUrls.NinjaFact}/facts";
+            var url = $"{serviceSettings.NinjaFacts}/facts";
             try
             {
                 logger.LogDebug($"Call to :{url}");
-                var response = await new HttpClient().GetAsync(url);
+                var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("x-api-key", serviceSettings.NinjaFactsApiKey);
+                var response = await client.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                     logger.LogError($"Failed to get ninja facts. Status code: {response.StatusCode}");
@@ -31,11 +34,19 @@ namespace FactsApi.Services.NinjaFacts
 
                 var jsonString = await response.Content.ReadAsStringAsync();
 
-                var ninjaFactsResponse = JsonSerializer.Deserialize<List<NinjaFactDTO>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var ninjaFactsResponse = JsonSerializer.Deserialize<IEnumerable<NinjaFact>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                var ninjaFactsResponseWithLimit = ninjaFactsResponse.Take(limit).ToList();
+                var ninjaFactsResponseWithLimit = ninjaFactsResponse.Take(limit);
 
-                return ninjaFactsResponseWithLimit;
+                return new FactsContainer
+                {
+                    Facts = ninjaFactsResponseWithLimit.Select(s => new Fact
+                    {
+                        Text = s.Fact,
+                        Category = "Ninjas"
+                    })
+                };
+
             }
             catch (Exception ex)
             {

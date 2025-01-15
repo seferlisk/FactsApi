@@ -3,9 +3,9 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace FactsApi.Services.DogFacts.DTO
 {
-    public class DogsFactsDTO
+    public class DogsFactsResponse
     {
-        public List<DogFact> Data { get; set; }
+        public IEnumerable<DogFact> Data { get; set; }
     }
 
     public  class DogFact

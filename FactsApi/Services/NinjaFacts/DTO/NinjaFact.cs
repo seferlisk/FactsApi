@@ -1,6 +1,6 @@
 ﻿namespace FactsApi.Services.NinjaFacts.DTO
 {
-    public class NinjaFactDTO
+    public class NinjaFact
     {
         public string Fact { get; set; }
     }

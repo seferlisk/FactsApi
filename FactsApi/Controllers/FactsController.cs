@@ -1,5 +1,5 @@
-using FactsApi.Services.CatFacts.DTO;
 using FactsApi.Services.FactsAggregate;
+using FactsApi.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FactsApi.Controllers
@@ -18,9 +18,9 @@ namespace FactsApi.Controllers
         }
 
         [HttpGet(Name = "GetFacts")]
-        public async Task<FactsContainer> Get(int limit = 20)
+        public async Task<FactsContainer> Get(int limit = 20, string? category = null)
         {
-            return await factsAggregateService.GetFactsAsync(limit);
+            return await factsAggregateService.GetFactsAsync(limit, category);
         }
     }
 }

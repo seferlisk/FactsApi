@@ -1,10 +1,10 @@
 ﻿using FactsApi.Services.DogFacts.DTO;
+using FactsApi.Services.Interfaces;
 
 namespace FactsApi.Services.DogFacts
 {
-    public interface IDogFactsService
+    public interface IDogFactsService : IFactsService
     {
-        Task<DogsFactsDTO> GetDogFactsAsync(int limit);
     }
 }
 

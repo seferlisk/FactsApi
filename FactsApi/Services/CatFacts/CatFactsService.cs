@@ -1,4 +1,5 @@
 ﻿using FactsApi.Services.CatFacts.DTO;
+using FactsApi.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -6,18 +7,18 @@ namespace FactsApi.Services.CatFacts
 {
     public class CatFactsService : ICatFactsService
     {
-        private readonly ServiceUrls serviceUrls;
+        private readonly ServiceSettings serviceSettings;
         private readonly ILogger logger;
 
-        public CatFactsService(IOptions<ServiceUrls> serviceUrls, ILogger<CatFactsService> logger)
+        public CatFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<CatFactsService> logger)
         {
-            this.serviceUrls = serviceUrls.Value;
+            this.serviceSettings = serviceSettings.Value;
             this.logger = logger;
         }
 
-        public async Task<CatFactsServiceDTO> GetCatFactsAsync(int limit)
+        public async Task<FactsContainer> GetFactsAsync(int limit)
         {
-            var url = $"{serviceUrls.CatFact}/facts?limit={limit}";
+            var url = $"{serviceSettings.CatFacts}/facts?limit={limit}";
             try
             {
                 logger.LogDebug($"Call to :{url}");
@@ -30,9 +31,16 @@ namespace FactsApi.Services.CatFacts
 
                 var jsonString = await response.Content.ReadAsStringAsync();
 
-                var catFactsResponse = JsonSerializer.Deserialize<CatFactsServiceDTO>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true});
-
-                return catFactsResponse;
+                var catFactsResponse = JsonSerializer.Deserialize<CatFactsResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true});
+                
+                return new FactsContainer
+                {
+                    Facts = catFactsResponse?.Data?.Select(s => new Fact
+                    {
+                        Text = s.Fact,
+                        Category = "Cats"
+                    })
+                };
             }
             catch (Exception ex)
             {

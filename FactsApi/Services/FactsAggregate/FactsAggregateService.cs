@@ -1,7 +1,7 @@
 ﻿using FactsApi.Services.CatFacts;
-using FactsApi.Services.CatFacts.DTO;
 using FactsApi.Services.DogFacts;
 using FactsApi.Services.DogFacts.DTO;
+using FactsApi.Services.Interfaces;
 using FactsApi.Services.NinjaFacts;
 using FactsApi.Services.NinjaFacts.DTO;
 
@@ -20,40 +20,34 @@ namespace FactsApi.Services.FactsAggregate
             this.ninjaFactsService = ninjaFactsService;
         }
 
-        public async Task<FactsContainer> GetFactsAsync(int limit)
+        public async Task<FactsContainer> GetFactsAsync(int limit, string category)
         {
-            var cats = await catFactsService.GetCatFactsAsync(limit);
-            var dogs = await dogFactsService.GetDogFactsAsync(limit);
-            var ninjas = await ninjaFactsService.GetNinjaFactsAsync(limit);
+            var catsPromise = catFactsService.GetFactsAsync(limit);
+            var dogsPromise = dogFactsService.GetFactsAsync(limit);
+            var ninjasPromise = ninjaFactsService.GetFactsAsync(limit);
 
+            var allResults = await Task.WhenAll(catsPromise, dogsPromise, ninjasPromise);
 
-            //return new FactsContainer
-            //{
-            //    Facts = cats.Data.Select(x => new Fact { Text = x.Fact, Category = "Cat" }).ToList(),
-            //            dogs.Data.Select(x => new Fact { Text = x.Fact, Category = "Dog" }).ToList(),
-            //            ninjas.Data.Select(x => new Fact { Text = x.Fact, Category = "Ninja" }).ToList(),
-            //};
+            var facts = new List<Fact>();
 
-            //TODO: Error handling (e.g., fallback to default values if an API fails)
+            foreach (var result in allResults)
+            {
+                facts.AddRange(result.Facts);
+            }
 
+            if (!string.IsNullOrEmpty(category))
+            {
+                facts = facts.Where(f => f.Category.ToString().ToLower() == category.ToLower()).ToList();
+            }
 
-            // Aggregate data
-            var aggregatedFacts = AggregateFacts(cats, dogs, ninjas);
+            facts = facts.OrderBy(_ => Guid.NewGuid()).Take(limit).ToList();
 
-            // Apply filtering/sorting
-            return ApplyFiltersAndSorting(aggregatedFacts, filter);
+            return new FactsContainer
+            {
+                Facts = facts
+            };
         }
 
-        private AggregatedResponse AggregateFacts(params object[] data)
-        {
-            // Combine data into a unified format
-            return new AggregatedResponse { Data = data.ToList() };
-        }
 
-        private AggregatedResponse ApplyFiltersAndSorting(AggregatedResponse data, AggregationFilter filter)
-        {
-            // Apply filtering/sorting logic
-            return data;
-        }
     }
 }

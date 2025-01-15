@@ -1,14 +1,14 @@
 ﻿namespace FactsApi.Services.CatFacts.DTO
 {
-    public class CatFactsDTO
+    public class CatFactsResponse
     {
         public int CurrentPage { get; set; }
-        public List<CatFact> Data { get; set; }
+        public IEnumerable<CatFact> Data { get; set; }
         public string FirstPageUrl { get; set; }
         public int From { get; set; }
         public int LastPage { get; set; }
         public string LastPageUrl { get; set; }
-        public List<CatFactsLink> Links { get; set; }
+        public IEnumerable<CatFactsLink> Links { get; set; }
         public string NextPageUrl { get; set; }
         public string Path { get; set; }
         public int PerPage { get; set; }

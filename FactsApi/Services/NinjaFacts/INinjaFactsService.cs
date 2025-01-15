@@ -1,9 +1,9 @@
-﻿using FactsApi.Services.NinjaFacts.DTO;
+﻿using FactsApi.Services.Interfaces;
+using FactsApi.Services.NinjaFacts.DTO;
 
 namespace FactsApi.Services.NinjaFacts
 {
-    public interface INinjaFactsService
+    public interface INinjaFactsService : IFactsService
     {
-        Task<List<NinjaFactDTO>> GetNinjaFactsAsync(int limit);
     }
 }

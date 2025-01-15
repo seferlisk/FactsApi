@@ -1,4 +1,5 @@
 ﻿using FactsApi.Services.DogFacts.DTO;
+using FactsApi.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -6,18 +7,18 @@ namespace FactsApi.Services.DogFacts
 {
     public class DogFactsService : IDogFactsService
     {
-        private readonly ServiceUrls serviceUrls;
+        private readonly ServiceSettings serviceSettings;
         private readonly ILogger logger;
 
-        public DogFactsService(IOptions<ServiceUrls> serviceUrls, ILogger<DogFactsService> logger)
+        public DogFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<DogFactsService> logger)
         {
-            this.serviceUrls = serviceUrls.Value;
+            this.serviceSettings = serviceSettings.Value;
             this.logger = logger;
         }
 
-        public async Task<DogsFactsDTO> GetDogFactsAsync(int limit)
+        public async Task<FactsContainer> GetFactsAsync(int limit)
         {
-            var url = $"{serviceUrls.DogFact}/facts?limit={limit}";
+            var url = $"{serviceSettings.DogFacts}/facts?limit={limit}";
             try
             {
                 logger.LogDebug($"Call to :{url}");
@@ -30,11 +31,19 @@ namespace FactsApi.Services.DogFacts
 
                 var jsonString = await response.Content.ReadAsStringAsync();
 
-                var dogFactsResponse = JsonSerializer.Deserialize<DogsFactsDTO>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var dogFactsResponse = JsonSerializer.Deserialize<DogsFactsResponse>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 
-                dogFactsResponse.Data = dogFactsResponse.Data?.Take(limit).ToList();
 
-                return dogFactsResponse;
+
+                return new FactsContainer
+                {
+                    Facts = dogFactsResponse?.Data?.Select(s => new Fact
+                    {
+                        Text = s?.Attributes?.Body,
+                        Category = "Dogs"
+                    })
+                };
+
             }
             catch (Exception ex)
             {
