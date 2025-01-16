@@ -7,15 +7,31 @@ namespace FactsApi.Services.CatFacts
 {
     public class CatFactsService : ICatFactsService
     {
+        /// <summary>
+        /// Service for retrieving facts about cats from an external API.
+        /// </summary>
         private readonly ServiceSettings serviceSettings;
         private readonly ILogger logger;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CatFactsService"/> class.
+        /// </summary>
+        /// <param name="serviceSettings">The settings for external services, including the Cat Facts API URL.</param>
+        /// <param name="logger">The logger for capturing application logs.</param>
         public CatFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<CatFactsService> logger)
         {
             this.serviceSettings = serviceSettings.Value;
             this.logger = logger;
         }
 
+        /// <summary>
+        /// Retrieves a list of cat facts from the external Cat Facts API.
+        /// </summary>
+        /// <param name="limit">The maximum number of cat facts to retrieve.</param>
+        /// <returns>A task that represents the asynchronous operation, containing a <see cref="FactsContainer"/> with the retrieved cat facts.</returns>
+        /// <exception cref="HttpRequestException">Thrown if the HTTP request fails or the response status is not successful.</exception>
+        /// <exception cref="JsonException">Thrown if the response content cannot be deserialized into the expected format.</exception>
+        /// <exception cref="Exception">Thrown for any other errors during the process.</exception>
         public async Task<FactsContainer> GetFactsAsync(int limit)
         {
             var url = $"{serviceSettings.CatFacts}/facts?limit={limit}";
