@@ -56,7 +56,7 @@ namespace FactsApi.Services.FactsAggregate
 
             if (!string.IsNullOrEmpty(category))
             {
-                facts = facts.Where(f => f.Category.ToString().ToLower() == category.ToLower()).ToList();
+                facts = facts.Where(f => f.Category.ToLower() == category.ToLower()).ToList();
             }
 
             facts = facts.OrderBy(_ => Guid.NewGuid()).Take(limit).ToList();
