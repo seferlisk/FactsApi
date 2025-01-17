@@ -98,5 +98,5 @@ Navigate to http://localhost:<port>/api/Facts in your browser or use a tool like
 ## Unit Testing
 Unit tests are implemented using xUnit. These tests ensure the correctness and reliability of the API aggregation service.
 
-### Running Tests
+# Running Tests
 To run the tests, use the following command: dotnet test
