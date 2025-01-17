@@ -79,24 +79,24 @@ Serilog for logging
 ### Installation
 Step-by-step instructions to install and set up your project.
 
-# Clone the repository
+## Clone the repository
 git clone https://github.com/seferlisk/FactsApi.git
 cd FactsApi
 
-# Install dependencies
+## Install dependencies
 In order to install the dependecies, use the following command: dotnet restore
 
-# Set up environment variables
+## Set up environment variables
 Add API keys for external APIs (e.g., Ninja Facts) to the appsettings.json file or your environment configuration.
 
-# Run the project
+## Run the project
 In order to run the project, use the following command: dotnet run
 
-# Access the API
+## Access the API
 Navigate to http://localhost:<port>/api/Facts in your browser or use a tool like Postman.
 
 ## Unit Testing
 Unit tests are implemented using xUnit. These tests ensure the correctness and reliability of the API aggregation service.
 
-### Running Tests
+## Running Tests
 To run the tests, use the following command: dotnet test
