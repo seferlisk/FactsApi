@@ -9,12 +9,15 @@ namespace FactsApi.Services.FactsAggregate
 {
     /// <summary>
     /// Service for aggregating facts from multiple sources.
+    /// This service retrieves facts concurrently from the CatFacts, DogFacts, and NinjaFacts services
+    /// and provides options for filtering and limiting the results.
     /// </summary>
     public class FactsAggregateService : IFactsAggregateService
     {
         private readonly ICatFactsService catFactsService;
         private readonly IDogFactsService dogFactsService;
         private readonly INinjaFactsService ninjaFactsService;
+        private readonly ILogger<FactsAggregateService> logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FactsAggregateService"/> class.
@@ -22,11 +25,17 @@ namespace FactsApi.Services.FactsAggregate
         /// <param name="catFactsService">Service for retrieving cat facts.</param>
         /// <param name="dogFactsService">Service for retrieving dog facts.</param>
         /// <param name="ninjaFactsService">Service for retrieving ninja facts.</param>
-        public FactsAggregateService(ICatFactsService catFactsService, IDogFactsService dogFactsService, INinjaFactsService ninjaFactsService)
+        /// <param name="logger">Logger for capturing application logs and errors.</param>
+        public FactsAggregateService(
+            ICatFactsService catFactsService,
+            IDogFactsService dogFactsService,
+            INinjaFactsService ninjaFactsService,
+            ILogger<FactsAggregateService> logger)
         {
             this.catFactsService = catFactsService;
             this.dogFactsService = dogFactsService;
             this.ninjaFactsService = ninjaFactsService;
+            this.logger = logger;
         }
 
         /// <summary>
@@ -36,35 +45,77 @@ namespace FactsApi.Services.FactsAggregate
         /// <param name="category">The optional category to filter the facts (e.g., "cat", "dog", "ninja").</param>
         /// <returns>A task representing the asynchronous operation, containing a <see cref="FactsContainer"/> with the aggregated facts.</returns>
         /// <remarks>
-        /// This method retrieves facts from the CatFacts, DogFacts, and NinjaFacts services concurrently.
-        /// It supports filtering by category and limits the total number of facts.
+        /// This method performs the following steps:
+        /// 1. Concurrently retrieves facts from the CatFacts, DogFacts, and NinjaFacts services.
+        /// 2. Handles errors gracefully for each service by logging the error and adding a fallback fact.
+        /// 3. Applies filtering by category, if specified.
+        /// 4. Limits the number of facts returned to the specified maximum.
         /// </remarks>
         public async Task<FactsContainer> GetFactsAsync(int limit, string category)
         {
-            var catsTask = catFactsService.GetFactsAsync(limit);
-            var dogsTask = dogFactsService.GetFactsAsync(limit);
-            var ninjasTask = ninjaFactsService.GetFactsAsync(limit);
-
-            var allResults = await Task.WhenAll(catsTask, dogsTask, ninjasTask);
-
             var facts = new List<Fact>();
 
-            foreach (var result in allResults)
+            // Concurrently fetch facts with fallbacks
+            var tasks = new List<Task>
             {
-                facts.AddRange(result.Facts);
-            }
+                FetchWithFallbackAsync(catFactsService.GetFactsAsync, "Cats", limit, facts),
+                FetchWithFallbackAsync(dogFactsService.GetFactsAsync, "Dogs", limit, facts),
+                FetchWithFallbackAsync(ninjaFactsService.GetFactsAsync, "Ninjas", limit, facts)
+            };
 
+            await Task.WhenAll(tasks);
+
+            // Filter by category if provided
             if (!string.IsNullOrEmpty(category))
             {
-                facts = facts.Where(f => f.Category.ToLower() == category.ToLower()).ToList();
+                facts = facts.Where(f => f.Category.Equals(category, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
-            facts = facts.OrderBy(_ => Guid.NewGuid()).Take(limit).ToList();
+            // Limit the number of facts
+            facts = facts.Take(limit).ToList();
 
-            return new FactsContainer
+            return new FactsContainer { Facts = facts };
+        }
+
+        /// <summary>
+        /// Fetches facts from a single source and adds them to the aggregated facts list.
+        /// If the source is unavailable, a fallback fact is added to the list.
+        /// </summary>
+        /// <param name="fetchMethod">The method to fetch facts from the external API.</param>
+        /// <param name="category">The category of the facts (e.g., "Cats").</param>
+        /// <param name="limit">The maximum number of facts to retrieve.</param>
+        /// <param name="facts">The shared list of aggregated facts.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        private async Task FetchWithFallbackAsync(
+            Func<int, Task<FactsContainer>> fetchMethod,
+            string category,
+            int limit,
+            List<Fact> facts)
+        {
+            try
             {
-                Facts = facts
-            };
+                var result = await fetchMethod(limit);
+                if (result?.Facts != null)
+                {
+                    lock (facts) // Ensure thread safety when adding to the list
+                    {
+                        facts.AddRange(result.Facts);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Failed to fetch {category} facts: {ex.Message}");
+                lock (facts)
+                {
+                    // Add a fallback fact to maintain context
+                    facts.Add(new Fact
+                    {
+                        Text = $"No {category} facts available at the moment. Please try again later.",
+                        Category = category
+                    });
+                }
+            }
         }
 
 
