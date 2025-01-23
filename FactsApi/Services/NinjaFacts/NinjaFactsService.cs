@@ -9,7 +9,7 @@ namespace FactsApi.Services.NinjaFacts
     public class NinjaFactsService : INinjaFactsService
     {
         /// <summary>
-        /// Service for retrieving facts about ninjas from an external API.
+        /// Service for retrieving ninja facts from an external API.
         /// </summary>
         private readonly ServiceSettings serviceSettings;
         private readonly ILogger logger;

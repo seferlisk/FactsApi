@@ -30,6 +30,8 @@ namespace FactsApi
 
             builder.Services.Configure<ServiceSettings>(builder.Configuration.GetSection("ServiceSettings"));
 
+            builder.Services.AddHttpClient();
+
             builder.Services.AddScoped<IDogFactsService, DogFactsService>();
             builder.Services.AddScoped<ICatFactsService, CatFactsService>();
             builder.Services.AddScoped<INinjaFactsService, NinjaFactsService>();

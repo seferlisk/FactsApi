@@ -1,6 +1,7 @@
 ﻿using FactsApi.Services.CatFacts.DTO;
 using FactsApi.Services.Interfaces;
 using Microsoft.Extensions.Options;
+using System.Net.Http;
 using System.Text.Json;
 
 namespace FactsApi.Services.CatFacts
@@ -12,16 +13,19 @@ namespace FactsApi.Services.CatFacts
         /// </summary>
         private readonly ServiceSettings serviceSettings;
         private readonly ILogger logger;
+        private readonly HttpClient httpClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CatFactsService"/> class.
         /// </summary>
         /// <param name="serviceSettings">The settings for external services, including the Cat Facts API URL.</param>
         /// <param name="logger">The logger for capturing application logs.</param>
-        public CatFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<CatFactsService> logger)
+        /// <param name="httpClientFactory"></param>
+        public CatFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<CatFactsService> logger, IHttpClientFactory httpClientFactory)
         {
             this.serviceSettings = serviceSettings.Value;
             this.logger = logger;
+            this.httpClient = httpClientFactory.CreateClient();
         }
 
         /// <summary>
@@ -38,7 +42,7 @@ namespace FactsApi.Services.CatFacts
             try
             {
                 logger.LogDebug($"Call to :{url}");
-                var response = await new HttpClient().GetAsync(url);
+                var response = await httpClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                     logger.LogError($"Failed to get cat facts. Status code: {response.StatusCode}");
