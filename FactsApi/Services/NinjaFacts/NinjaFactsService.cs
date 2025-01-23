@@ -13,16 +13,20 @@ namespace FactsApi.Services.NinjaFacts
         /// </summary>
         private readonly ServiceSettings serviceSettings;
         private readonly ILogger logger;
+        private readonly HttpClient httpClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NinjaFactsService"/> class.
         /// </summary>
         /// <param name="serviceSettings">The settings for external services, including the Ninja Facts API URL and API key.</param>
         /// <param name="logger">The logger for capturing application logs.</param>
-        public NinjaFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<NinjaFactsService> logger)
+        /// <param name="httpClientFactory">Factory for creating HttpClient instances.</param>
+        public NinjaFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<NinjaFactsService> logger, IHttpClientFactory httpClientFactory)
         {
             this.serviceSettings = serviceSettings.Value;
             this.logger = logger;
+            this.httpClient = httpClientFactory.CreateClient();
+            this.httpClient.DefaultRequestHeaders.Add("x-api-key", this.serviceSettings.NinjaFactsApiKey);
         }
 
         /// <summary>
@@ -42,14 +46,14 @@ namespace FactsApi.Services.NinjaFacts
             try
             {
                 logger.LogDebug($"Call to :{url}");
-                var client = new HttpClient();
-                client.DefaultRequestHeaders.Add("x-api-key", serviceSettings.NinjaFactsApiKey);
-                var response = await client.GetAsync(url);
+
+                var response = await httpClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
+                {
                     logger.LogError($"Failed to get ninja facts. Status code: {response.StatusCode}");
-
-                response.EnsureSuccessStatusCode();
+                    response.EnsureSuccessStatusCode();
+                }
 
                 var jsonString = await response.Content.ReadAsStringAsync();
 

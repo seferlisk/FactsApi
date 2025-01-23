@@ -20,7 +20,7 @@ namespace FactsApi.Services.CatFacts
         /// </summary>
         /// <param name="serviceSettings">The settings for external services, including the Cat Facts API URL.</param>
         /// <param name="logger">The logger for capturing application logs.</param>
-        /// <param name="httpClientFactory"></param>
+        /// <param name="httpClientFactory">Factory for creating HttpClient instances.</param>
         public CatFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<CatFactsService> logger, IHttpClientFactory httpClientFactory)
         {
             this.serviceSettings = serviceSettings.Value;

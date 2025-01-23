@@ -12,16 +12,19 @@ namespace FactsApi.Services.DogFacts
     {
         private readonly ServiceSettings serviceSettings;
         private readonly ILogger logger;
+        private readonly HttpClient httpClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DogFactsService"/> class.
         /// </summary>
         /// <param name="serviceSettings">The settings for external services, including the Dog Facts API URL.</param>
         /// <param name="logger">The logger for capturing application logs.</param>
-        public DogFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<DogFactsService> logger)
+        /// <param name="httpClientFactory">Factory for creating HttpClient instances.</param>
+        public DogFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<DogFactsService> logger, IHttpClientFactory httpClientFactory)
         {
             this.serviceSettings = serviceSettings.Value;
             this.logger = logger;
+            this.httpClient = httpClientFactory.CreateClient();
         }
 
         /// <summary>
@@ -41,7 +44,7 @@ namespace FactsApi.Services.DogFacts
             try
             {
                 logger.LogDebug($"Call to :{url}");
-                var response = await new HttpClient().GetAsync(url);
+                var response = await httpClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
                     logger.LogError($"Failed to get Dog facts. Status code: {response.StatusCode}");
