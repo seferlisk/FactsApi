@@ -396,3 +396,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Exclude secrets.json to avoid exposing sensitive information
+secrets.json

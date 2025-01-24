@@ -21,6 +21,8 @@ namespace FactsApi
 
             builder.Host.UseSerilog();
 
+            builder.Configuration.AddUserSecrets<Program>();
+
             // Add services to the container.
             builder.Services.AddControllers();
             
