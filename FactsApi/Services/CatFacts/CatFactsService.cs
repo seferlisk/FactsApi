@@ -1,7 +1,6 @@
 ﻿using FactsApi.Services.CatFacts.DTO;
 using FactsApi.Services.Interfaces;
 using Microsoft.Extensions.Options;
-using System.Net.Http;
 using System.Text.Json;
 
 namespace FactsApi.Services.CatFacts
