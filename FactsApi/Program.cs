@@ -23,10 +23,10 @@ namespace FactsApi
 
             builder.Configuration.AddUserSecrets<Program>();
 
-            // Add services to the container.
-            builder.Services.AddControllers();
-            
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddMemoryCache();
+
+            builder.Services.AddControllers();            
+          
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
