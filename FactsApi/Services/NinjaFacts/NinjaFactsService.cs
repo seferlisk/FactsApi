@@ -3,6 +3,7 @@ using FactsApi.Services.NinjaFacts;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 using FactsApi.Services.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FactsApi.Services.NinjaFacts
 {
@@ -14,6 +15,7 @@ namespace FactsApi.Services.NinjaFacts
         private readonly ServiceSettings serviceSettings;
         private readonly ILogger logger;
         private readonly HttpClient httpClient;
+        private readonly IMemoryCache memoryCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NinjaFactsService"/> class.
@@ -21,12 +23,18 @@ namespace FactsApi.Services.NinjaFacts
         /// <param name="serviceSettings">The settings for external services, including the Ninja Facts API URL and API key.</param>
         /// <param name="logger">The logger for capturing application logs.</param>
         /// <param name="httpClientFactory">Factory for creating HttpClient instances.</param>
-        public NinjaFactsService(IOptions<ServiceSettings> serviceSettings, ILogger<NinjaFactsService> logger, IHttpClientFactory httpClientFactory)
+        /// <param name="memoryCache"></param>
+        public NinjaFactsService(
+            IOptions<ServiceSettings> serviceSettings,
+            ILogger<NinjaFactsService> logger,
+            IHttpClientFactory httpClientFactory,
+            IMemoryCache memoryCache)
         {
             this.serviceSettings = serviceSettings.Value;
             this.logger = logger;
             this.httpClient = httpClientFactory.CreateClient();
             this.httpClient.DefaultRequestHeaders.Add("x-api-key", this.serviceSettings.NinjaFactsApiKey);
+            this.memoryCache = memoryCache;
         }
 
         /// <summary>
@@ -42,6 +50,15 @@ namespace FactsApi.Services.NinjaFacts
         /// <exception cref="Exception">Thrown for any other errors during the process.</exception>
         public async Task<FactsContainer> GetFactsAsync(int limit)
         {
+            var cacheKey = $"NinjaFacts_{limit}";
+
+            // Check if the data is already cached
+            if (memoryCache.TryGetValue(cacheKey, out FactsContainer cachedFacts))
+            {
+                logger.LogDebug("Returning ninja facts from cache.");
+                return cachedFacts;
+            }
+
             var url = $"{serviceSettings.NinjaFacts}/facts";
             try
             {
@@ -57,11 +74,13 @@ namespace FactsApi.Services.NinjaFacts
 
                 var jsonString = await response.Content.ReadAsStringAsync();
 
-                var ninjaFactsResponse = JsonSerializer.Deserialize<IEnumerable<NinjaFact>>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var ninjaFactsResponse = JsonSerializer.Deserialize<IEnumerable<NinjaFact>>(
+                    jsonString,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 var ninjaFactsResponseWithLimit = ninjaFactsResponse.Take(limit);
 
-                return new FactsContainer
+                var facts = new FactsContainer
                 {
                     Facts = ninjaFactsResponseWithLimit.Select(s => new Fact
                     {
@@ -70,11 +89,15 @@ namespace FactsApi.Services.NinjaFacts
                     })
                 };
 
+                // Cache the result
+                memoryCache.Set(cacheKey, facts, TimeSpan.FromMinutes(10));
+                logger.LogDebug("Ninja facts added to cache.");
+
+                return facts;
             }
             catch (Exception ex)
             {
                 logger.LogError($"An error occurred while fetching ninja facts: {ex.Message}");
-
                 throw;
             }
         }
