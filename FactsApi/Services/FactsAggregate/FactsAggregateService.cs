@@ -1,9 +1,8 @@
 ﻿using FactsApi.Services.CatFacts;
 using FactsApi.Services.DogFacts;
-using FactsApi.Services.DogFacts.DTO;
 using FactsApi.Services.Interfaces;
 using FactsApi.Services.NinjaFacts;
-using FactsApi.Services.NinjaFacts.DTO;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FactsApi.Services.FactsAggregate
 {
@@ -18,6 +17,7 @@ namespace FactsApi.Services.FactsAggregate
         private readonly IDogFactsService dogFactsService;
         private readonly INinjaFactsService ninjaFactsService;
         private readonly ILogger<FactsAggregateService> logger;
+        private readonly IMemoryCache memoryCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FactsAggregateService"/> class.
@@ -26,17 +26,21 @@ namespace FactsApi.Services.FactsAggregate
         /// <param name="dogFactsService">Service for retrieving dog facts.</param>
         /// <param name="ninjaFactsService">Service for retrieving ninja facts.</param>
         /// <param name="logger">Logger for capturing application logs and errors.</param>
+        /// <param name="memoryCache"></param>
         public FactsAggregateService(
             ICatFactsService catFactsService,
             IDogFactsService dogFactsService,
             INinjaFactsService ninjaFactsService,
-            ILogger<FactsAggregateService> logger)
+            ILogger<FactsAggregateService> logger,
+            IMemoryCache memoryCache)
         {
             this.catFactsService = catFactsService;
             this.dogFactsService = dogFactsService;
             this.ninjaFactsService = ninjaFactsService;
             this.logger = logger;
+            this.memoryCache = memoryCache;
         }
+
 
         /// <summary>
         /// Retrieves a collection of aggregated facts from multiple sources.
@@ -53,6 +57,15 @@ namespace FactsApi.Services.FactsAggregate
         /// </remarks>
         public async Task<FactsContainer> GetFactsAsync(int limit, string category)
         {
+            var cacheKey = $"AggregatedFacts_{limit}_{category}";
+
+            // Check if the data is already cached
+            if (memoryCache.TryGetValue(cacheKey, out FactsContainer? cachedFacts))
+            {
+                logger.LogDebug("Returning aggregated facts from cache.");
+                return cachedFacts;
+            }
+
             var facts = new List<Fact>();
 
             // Concurrently fetch facts with fallbacks
@@ -74,7 +87,13 @@ namespace FactsApi.Services.FactsAggregate
             // Limit the number of facts
             facts = facts.Take(limit).ToList();
 
-            return new FactsContainer { Facts = facts };
+            var aggregatedFacts = new FactsContainer { Facts = facts };
+
+            // Store the aggregated result in cache with a 5-minute expiration
+            memoryCache.Set(cacheKey, aggregatedFacts, TimeSpan.FromMinutes(5));
+            logger.LogDebug("Aggregated facts added to cache.");
+
+            return aggregatedFacts;
         }
 
         /// <summary>
