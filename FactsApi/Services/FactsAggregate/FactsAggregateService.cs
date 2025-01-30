@@ -3,6 +3,7 @@ using FactsApi.Services.DogFacts;
 using FactsApi.Services.Interfaces;
 using FactsApi.Services.NinjaFacts;
 using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
 
 namespace FactsApi.Services.FactsAggregate
 {
@@ -57,7 +58,7 @@ namespace FactsApi.Services.FactsAggregate
         /// </remarks>
         public async Task<FactsContainer> GetFactsAsync(int limit, string category)
         {
-            var cacheKey = $"AggregatedFacts_{limit}_{category}";
+            var cacheKey = $"AggregatedFacts_{limit}_{category ?? "All"}";
 
             // Check if the data is already cached
             if (memoryCache.TryGetValue(cacheKey, out FactsContainer? cachedFacts))
@@ -66,7 +67,7 @@ namespace FactsApi.Services.FactsAggregate
                 return cachedFacts;
             }
 
-            var facts = new List<Fact>();
+            var facts = new ConcurrentBag<Fact>(); // thread safe
 
             // Concurrently fetch facts with fallbacks
             var tasks = new List<Task>
@@ -78,16 +79,19 @@ namespace FactsApi.Services.FactsAggregate
 
             await Task.WhenAll(tasks);
 
+            // Convert to list for filtering and limiting
+            var factsList = facts.ToList();
+
             // Filter by category if provided
             if (!string.IsNullOrEmpty(category))
             {
-                facts = facts.Where(f => f.Category.Equals(category, StringComparison.OrdinalIgnoreCase)).ToList();
+                factsList = factsList.Where(f => f.Category.Equals(category, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
             // Limit the number of facts
-            facts = facts.Take(limit).ToList();
+            factsList = factsList.Take(limit).ToList();
 
-            var aggregatedFacts = new FactsContainer { Facts = facts };
+            var aggregatedFacts = new FactsContainer { Facts = factsList };
 
             // Store the aggregated result in cache with a 5-minute expiration
             memoryCache.Set(cacheKey, aggregatedFacts, TimeSpan.FromMinutes(5));
@@ -109,16 +113,16 @@ namespace FactsApi.Services.FactsAggregate
             Func<int, Task<FactsContainer>> fetchMethod,
             string category,
             int limit,
-            List<Fact> facts)
+            ConcurrentBag<Fact> facts)
         {
             try
             {
                 var result = await fetchMethod(limit);
                 if (result?.Facts != null)
                 {
-                    lock (facts) // Ensure thread safety when adding to the list
+                    foreach (var fact in result.Facts)
                     {
-                        facts.AddRange(result.Facts);
+                        facts.Add(fact);
                     }
                 }
             }

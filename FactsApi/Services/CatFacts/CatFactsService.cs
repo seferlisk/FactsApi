@@ -47,7 +47,7 @@ namespace FactsApi.Services.CatFacts
         {
             var cacheKey = $"CatFacts_{limit}";
 
-            // Try to get the cached value
+            // Check if the data is already cached
             if (memoryCache.TryGetValue(cacheKey, out FactsContainer cachedFacts))
             {
                 logger.LogDebug("Returning cat facts from cache.");

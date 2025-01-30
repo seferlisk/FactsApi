@@ -50,7 +50,7 @@ namespace FactsApi.Services.DogFacts
         {
             var cacheKey = $"DogFacts_{limit}";
 
-            // Check if the data is already in the cache
+            // Check if the data is already  cached
             if (memoryCache.TryGetValue(cacheKey, out FactsContainer cachedFacts))
             {
                 logger.LogDebug("Returning dog facts from cache.");
