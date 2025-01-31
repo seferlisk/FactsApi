@@ -70,14 +70,18 @@ namespace FactsApi.Services.FactsAggregate
             var facts = new ConcurrentBag<Fact>(); // thread safe
 
             // Concurrently fetch facts with fallbacks
-            var tasks = new List<Task>
+            var services = new List<Func<int, Task<FactsContainer>>>
             {
-                FetchWithFallbackAsync(catFactsService.GetFactsAsync, "Cats", limit, facts),
-                FetchWithFallbackAsync(dogFactsService.GetFactsAsync, "Dogs", limit, facts),
-                FetchWithFallbackAsync(ninjaFactsService.GetFactsAsync, "Ninjas", limit, facts)
+                catFactsService.GetFactsAsync,
+                dogFactsService.GetFactsAsync,
+                ninjaFactsService.GetFactsAsync
             };
 
-            await Task.WhenAll(tasks);
+            // Execute API calls in parallel using Parallel.ForEachAsync()
+            await Parallel.ForEachAsync(services, async (fetchMethod, _) =>
+            {
+                await FetchWithFallbackAsync(fetchMethod, category, limit, facts);
+            });
 
             // Convert to list for filtering and limiting
             var factsList = facts.ToList();
