@@ -3,6 +3,7 @@ using FactsApi.Services.DogFacts;
 using FactsApi.Services.FactsAggregate;
 using FactsApi.Services.Interfaces;
 using FactsApi.Services.NinjaFacts;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -19,7 +20,9 @@ namespace FactsApi.Tests
             var ninjaFactsService = new FailingNinjaFactsService(); // This service simulates a failure
 
             var logger = new MockLogger<FactsAggregateService>();
-            var service = new FactsAggregateService(catFactsService, dogFactsService, ninjaFactsService, logger);
+            var memoryCache = new MemoryCache(new MemoryCacheOptions());
+
+            var service = new FactsAggregateService(catFactsService, dogFactsService, ninjaFactsService, logger, memoryCache);
 
             // Act
             var result = await service.GetFactsAsync(10, null);
@@ -28,6 +31,11 @@ namespace FactsApi.Tests
             Assert.NotNull(result);
             Assert.NotNull(result.Facts);
             Assert.Equal(3, result.Facts.Count());
+
+            // Allow for fallback facts
+            Assert.Contains(result.Facts, fact => fact.Category == "Dogs");
+            Assert.Contains(result.Facts, fact => fact.Category == "Cats");
+            Assert.Contains(result.Facts, fact => fact.Text.Contains("No facts available at the moment"));
             Assert.Contains(result.Facts, fact => fact.Category == "Ninjas" && fact.Text.Contains("No Ninjas facts available"));
         }
 
@@ -40,7 +48,9 @@ namespace FactsApi.Tests
             var ninjaFactsService = new MockNinjaFactsService();
 
             var logger = new MockLogger<FactsAggregateService>();
-            var service = new FactsAggregateService(catFactsService, dogFactsService, ninjaFactsService, logger);
+            var memoryCache = new MemoryCache(new MemoryCacheOptions());
+
+            var service = new FactsAggregateService(catFactsService, dogFactsService, ninjaFactsService, logger, memoryCache);
 
             // Act
             var result = await service.GetFactsAsync(2, null);
@@ -60,7 +70,9 @@ namespace FactsApi.Tests
             var ninjaFactsService = new MockNinjaFactsService();
 
             var logger = new MockLogger<FactsAggregateService>();
-            var service = new FactsAggregateService(catFactsService, dogFactsService, ninjaFactsService, logger);
+            var memoryCache = new MemoryCache(new MemoryCacheOptions());
+
+            var service = new FactsAggregateService(catFactsService, dogFactsService, ninjaFactsService, logger, memoryCache);
 
             // Act
             var result = await service.GetFactsAsync(10, "cat");
