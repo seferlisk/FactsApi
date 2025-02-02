@@ -86,6 +86,15 @@ namespace FactsApi.Services.FactsAggregate
             // Convert to list for filtering and limiting
             var factsList = facts.ToList();
 
+            // Ensure fallback facts always have a valid category
+            //foreach (var fact in factsList)
+            //{
+            //    if (string.IsNullOrEmpty(fact.Category))
+            //    {
+            //        fact.Category = category ?? "Unknown";
+            //    }
+            //}
+
             // Filter by category if provided
             if (!string.IsNullOrEmpty(category))
             {

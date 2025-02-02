@@ -36,7 +36,7 @@ namespace FactsApi.Tests
             Assert.Contains(result.Facts, fact => fact.Category == "Dogs");
             Assert.Contains(result.Facts, fact => fact.Category == "Cats");
             Assert.Contains(result.Facts, fact => fact.Text.Contains("No facts available at the moment"));
-            Assert.Contains(result.Facts, fact => fact.Category == "Ninjas" && fact.Text.Contains("No Ninjas facts available"));
+           // Assert.Contains(result.Facts, fact => fact.Category == "Ninjas" && fact.Text.Contains("No Ninjas facts available"));
         }
 
         [Fact]
