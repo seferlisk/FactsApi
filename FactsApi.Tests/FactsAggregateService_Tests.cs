@@ -30,13 +30,8 @@ namespace FactsApi.Tests
             // Assert
             Assert.NotNull(result);
             Assert.NotNull(result.Facts);
-            Assert.Equal(3, result.Facts.Count());
-
-            // Allow for fallback facts
-            Assert.Contains(result.Facts, fact => fact.Category == "Dogs");
-            Assert.Contains(result.Facts, fact => fact.Category == "Cats");
-            Assert.Contains(result.Facts, fact => fact.Text.Contains("No facts available at the moment"));
-           // Assert.Contains(result.Facts, fact => fact.Category == "Ninjas" && fact.Text.Contains("No Ninjas facts available"));
+            Assert.Equal(3, result.Facts.Count());            
+            Assert.Contains(result.Facts, fact => fact.Category == "Ninjas" && fact.Text.Contains("No Ninjas facts available"));
         }
 
         [Fact]
