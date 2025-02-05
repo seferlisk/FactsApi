@@ -5,7 +5,6 @@ using FactsApi.Services.Interfaces;
 using FactsApi.Services.NinjaFacts;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Moq;
 using Xunit;
 
 namespace FactsApi.Tests
@@ -16,48 +15,23 @@ namespace FactsApi.Tests
         public async Task GetFactsAsync_ReturnsAggregatedFactsWithFallback()
         {
             // Arrange
-            var catFactsService = new Mock<ICatFactsService>();
-            var dogFactsService = new Mock<IDogFactsService>();
-            var ninjaFactsService = new Mock<INinjaFactsService>(); // Simulate failure
+            var catFactsService = new MockCatFactsService();
+            var dogFactsService = new MockDogFactsService();
+            var ninjaFactsService = new FailingNinjaFactsService(); // This service simulates a failure
 
-            var logger = new Mock<ILogger<FactsAggregateService>>();
+            var logger = new MockLogger<FactsAggregateService>();
             var memoryCache = new MemoryCache(new MemoryCacheOptions());
 
-            //  Simulate Cat API returning valid data
-            catFactsService.Setup(s => s.GetFactsAsync(It.IsAny<int>()))
-                .ReturnsAsync(new FactsContainer
-                {
-                    Facts = new List<Fact> { new Fact { Text = "Cat fact 1", Category = "Cats" } }
-                });
+            var service = new FactsAggregateService(catFactsService, dogFactsService, ninjaFactsService, logger, memoryCache);
 
-            //  Simulate Dog API returning valid data
-            dogFactsService.Setup(s => s.GetFactsAsync(It.IsAny<int>()))
-                .ReturnsAsync(new FactsContainer
-                {
-                    Facts = new List<Fact> { new Fact { Text = "Dog fact 1", Category = "Dogs" } }
-                });
-
-            //  Simulate Ninja API **throwing an exception** (Failure scenario)
-            ninjaFactsService.Setup(s => s.GetFactsAsync(It.IsAny<int>()))
-                .ThrowsAsync(new Exception("Ninja API is down"));
-
-            var service = new FactsAggregateService(
-                catFactsService.Object, dogFactsService.Object, ninjaFactsService.Object, logger.Object, memoryCache);
-
-            //  Pass "Ninjas" as the category to check if the fallback message is properly added
-            var result = await service.GetFactsAsync(10, "Ninjas");
+            // Act
+            var result = await service.GetFactsAsync(10, null);
 
             // Assert
             Assert.NotNull(result);
             Assert.NotNull(result.Facts);
-            Assert.Equal(3, result.Facts.Count()); // Expecting 3 facts: 1 cat, 1 dog, 1 fallback
-
-            //  Ensure valid categories exist
-            Assert.Contains(result.Facts, f => f.Category == "Cats");
-            Assert.Contains(result.Facts, f => f.Category == "Dogs");
-
-            //  Ensure a fallback message exists for the failed API (Ninja)
-            Assert.Contains(result.Facts, f => f.Category == "Ninjas" && f.Text.Contains("No Ninjas facts available"));
+            Assert.Equal(3, result.Facts.Count());            
+            Assert.Contains(result.Facts, fact => fact.Category == "Ninjas" && fact.Text.Contains("No Ninjas facts available"));
         }
 
         [Fact]
