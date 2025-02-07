@@ -70,30 +70,30 @@ namespace FactsApi.Services.FactsAggregate
             var facts = new ConcurrentBag<Fact>(); // thread safe
 
             // Concurrently fetch facts with fallbacks
-            var services = new List<Func<int, Task<FactsContainer>>>
+            var services = new Dictionary<string, Func<int, Task<FactsContainer>>>
             {
-                catFactsService.GetFactsAsync,
-                dogFactsService.GetFactsAsync,
-                ninjaFactsService.GetFactsAsync
+                { "Cats", catFactsService.GetFactsAsync },
+                { "Dogs", dogFactsService.GetFactsAsync },
+                { "Ninjas", ninjaFactsService.GetFactsAsync }
             };
 
             // Execute API calls in parallel using Parallel.ForEachAsync()
-            await Parallel.ForEachAsync(services, async (fetchMethod, _) =>
+            await Parallel.ForEachAsync(services, async (service, _) =>
             {
-                await FetchWithFallbackAsync(fetchMethod, category, limit, facts);
+                await FetchWithFallbackAsync(service.Value, service.Key, limit, facts);
             });
 
             // Convert to list for filtering and limiting
             var factsList = facts.ToList();
 
-            // Ensure fallback facts always have a valid category
-            //foreach (var fact in factsList)
-            //{
-            //    if (string.IsNullOrEmpty(fact.Category))
-            //    {
-            //        fact.Category = category ?? "Unknown";
-            //    }
-            //}
+            //Ensure fallback facts always have a valid category
+            foreach (var fact in factsList)
+            {
+                if (string.IsNullOrEmpty(fact.Category))
+                {
+                    fact.Category = category ?? "Unknown";
+                }
+            }
 
             // Filter by category if provided
             if (!string.IsNullOrEmpty(category))
@@ -135,6 +135,7 @@ namespace FactsApi.Services.FactsAggregate
                 {
                     foreach (var fact in result.Facts)
                     {
+                        fact.Category ??= category;
                         facts.Add(fact);
                     }
                 }
