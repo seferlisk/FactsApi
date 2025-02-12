@@ -39,6 +39,14 @@ namespace FactsApi
             builder.Services.AddScoped<INinjaFactsService, NinjaFactsService>();
             builder.Services.AddScoped<IFactsAggregateService, FactsAggregateService>();
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAngular",
+                    policy => policy.WithOrigins("http://localhost:4200")
+                                    .AllowAnyMethod()
+                                    .AllowAnyHeader());
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -50,6 +58,7 @@ namespace FactsApi
 
             app.UseHttpsRedirection();
 
+            app.UseCors("AllowAngular");
 
             app.UseAuthorization();
 
