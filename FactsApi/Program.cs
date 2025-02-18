@@ -34,6 +34,8 @@ namespace FactsApi
 
             builder.Services.AddHttpClient();
 
+            builder.Services.AddSingleton<ApiStatisticsService>();
+
             builder.Services.AddScoped<IDogFactsService, DogFactsService>();
             builder.Services.AddScoped<ICatFactsService, CatFactsService>();
             builder.Services.AddScoped<INinjaFactsService, NinjaFactsService>();
