@@ -25,6 +25,13 @@ namespace FactsApi
 
             builder.Services.AddMemoryCache();
 
+            builder.Services.AddSingleton<ApiStatisticsService>();
+
+            builder.Services.AddScoped<IDogFactsService, DogFactsService>();
+            builder.Services.AddScoped<ICatFactsService, CatFactsService>();
+            builder.Services.AddScoped<INinjaFactsService, NinjaFactsService>();
+            builder.Services.AddScoped<IFactsAggregateService, FactsAggregateService>();
+
             builder.Services.AddControllers();            
           
             builder.Services.AddEndpointsApiExplorer();
@@ -33,13 +40,7 @@ namespace FactsApi
             builder.Services.Configure<ServiceSettings>(builder.Configuration.GetSection("ServiceSettings"));
 
             builder.Services.AddHttpClient();
-
-            builder.Services.AddSingleton<ApiStatisticsService>();
-
-            builder.Services.AddScoped<IDogFactsService, DogFactsService>();
-            builder.Services.AddScoped<ICatFactsService, CatFactsService>();
-            builder.Services.AddScoped<INinjaFactsService, NinjaFactsService>();
-            builder.Services.AddScoped<IFactsAggregateService, FactsAggregateService>();
+                        
 
             builder.Services.AddCors(options =>
             {
